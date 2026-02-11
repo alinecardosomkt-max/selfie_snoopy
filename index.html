@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Foto com Moldura</title>
+<style>
+  #canvas {
+    border: 1px solid #ccc;
+  }
+</style>
+</head>
+<body>
+
+<button id="startCamera">Abrir Câmera</button>
+<button id="takePhoto" disabled>Tirar Foto</button>
+<video id="video" autoplay playsinline style="display:none;"></video>
+<canvas id="canvas"></canvas>
+
+<script>
+const startButton = document.getElementById("startCamera");
+const takeButton = document.getElementById("takePhoto");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d");
+
+let stream;
+
+// Abrir câmera
+startButton.addEventListener("click", async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+    video.srcObject = stream;
+    await video.play();
+    takeButton.disabled = false;
+  } catch (err) {
+    alert("Permita acesso à câmera!");
+    console.error(err);
+  }
+});
+
+// Tirar foto
+takeButton.addEventListener("click", () => {
+  // Ajusta tamanho do canvas
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  // Desenha o vídeo no canvas
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // Adiciona moldura PNG
+  const overlay = new Image();
+  overlay.src = "moldura.png"; // seu PNG
+  overlay.onload = () => {
+    context.drawImage(overlay, 0, 0, canvas.width, canvas.height);
+
+    // Baixar a foto
+    const link = document.createElement("a");
+    link.download = "selfie.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+    // Para a câmera após tirar a foto
+    stream.getTracks().forEach(track => track.stop());
+    takeButton.disabled = true;
+  };
+});
+</script>
+
+</body>
+</html>
